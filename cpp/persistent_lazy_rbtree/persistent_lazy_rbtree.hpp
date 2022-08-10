@@ -91,13 +91,13 @@ template <typename T> class PersistentLazyRBTree {
     PersistentLazyRBTree(ptr<T> root) : root(root) {}
 
   public:
-    PersistentLazyRBTree() {}
+    PersistentLazyRBTree() : root(nullptr) {}
     size_t size() { return root ? root->size() : 0; }
     T operator[](size_t index) { return root->index(index); }
     static PersistentLazyRBTree merge(const PersistentLazyRBTree &left, const PersistentLazyRBTree &right) {
-        if (!left.root) {
+        if (left.root == nullptr) {
             return right;
-        } else if (!right.root) {
+        } else if (right.root == nullptr) {
             return left;
         } else {
             ptr<T> root = Node<T>::merge(left.root, right.root);

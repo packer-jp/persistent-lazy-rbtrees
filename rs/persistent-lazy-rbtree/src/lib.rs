@@ -5,7 +5,6 @@ enum Color {
     Red,
     Black,
 }
-use Color::{Black, Red};
 
 #[derive(Debug)]
 enum Node<T: Clone> {
@@ -20,15 +19,15 @@ enum Node<T: Clone> {
         right: Rc<Node<T>>,
     },
 }
-use Node::{Leaf, Tree};
+
 impl<T: Clone> Node<T> {
     fn new(color: Color, left: Rc<Node<T>>, right: Rc<Node<T>>) -> Self {
-        Tree {
+        Node::Tree {
             color,
             rank: left.rank()
                 + match left.color() {
-                    Black => 1,
-                    Red => 0,
+                    Color::Black => 1,
+                    Color::Red => 0,
                 },
             len: left.len() + right.len(),
             left,
@@ -37,38 +36,38 @@ impl<T: Clone> Node<T> {
     }
     fn color(&self) -> Color {
         match self {
-            Leaf { .. } => Black,
-            Tree { color, .. } => *color,
+            Node::Leaf { .. } => Color::Black,
+            Node::Tree { color, .. } => *color,
         }
     }
     fn rank(&self) -> usize {
         match self {
-            Leaf { .. } => 0,
-            Tree { rank, .. } => *rank,
+            Node::Leaf { .. } => 0,
+            Node::Tree { rank, .. } => *rank,
         }
     }
     fn len(&self) -> usize {
         match self {
-            Leaf { .. } => 1,
-            Tree { len, .. } => *len,
+            Node::Leaf { .. } => 1,
+            Node::Tree { len, .. } => *len,
         }
     }
     fn left(&self) -> &Rc<Node<T>> {
         match self {
-            Leaf { .. } => unreachable!(),
-            Tree { left, .. } => left,
+            Node::Leaf { .. } => unreachable!(),
+            Node::Tree { left, .. } => left,
         }
     }
     fn right(&self) -> &Rc<Node<T>> {
         match self {
-            Leaf { .. } => unreachable!(),
-            Tree { right, .. } => right,
+            Node::Leaf { .. } => unreachable!(),
+            Node::Tree { right, .. } => right,
         }
     }
     fn index(&self, index: usize) -> &T {
         match self {
-            Leaf { val } => val,
-            Tree { left, right, .. } => {
+            Node::Leaf { val } => val,
+            Node::Tree { left, right, .. } => {
                 if index < left.len() {
                     left.index(index)
                 } else {
@@ -81,25 +80,25 @@ impl<T: Clone> Node<T> {
         Rc::new(if left.rank() < right.rank() {
             let left = &Node::merge(left, right.left());
             match (left.color(), left.left().color(), right.color()) {
-                (Red, Red, Black) => match right.right().color() {
-                    Black => Self::new(
-                        Black,
+                (Color::Red, Color::Red, Color::Black) => match right.right().color() {
+                    Color::Black => Self::new(
+                        Color::Black,
                         Rc::clone(left.left()),
                         Rc::new(Self::new(
-                            Red,
+                            Color::Red,
                             Rc::clone(left.right()),
                             Rc::clone(right.right()),
                         )),
                     ),
-                    Red => Self::new(
-                        Red,
+                    Color::Red => Self::new(
+                        Color::Red,
                         Rc::new(Self::new(
-                            Black,
+                            Color::Black,
                             Rc::clone(left.left()),
                             Rc::clone(left.right()),
                         )),
                         Rc::new(Self::new(
-                            Black,
+                            Color::Black,
                             Rc::clone(right.right().left()),
                             Rc::clone(right.right().right()),
                         )),
@@ -110,25 +109,25 @@ impl<T: Clone> Node<T> {
         } else if left.rank() > right.rank() {
             let right = &Node::merge(left.right(), right);
             match (left.color(), right.right().color(), right.color()) {
-                (Black, Red, Red) => match left.left().color() {
-                    Black => Self::new(
-                        Black,
+                (Color::Black, Color::Red, Color::Red) => match left.left().color() {
+                    Color::Black => Self::new(
+                        Color::Black,
                         Rc::new(Self::new(
-                            Red,
+                            Color::Red,
                             Rc::clone(left.left()),
                             Rc::clone(right.left()),
                         )),
                         Rc::clone(right.right()),
                     ),
-                    Red => Self::new(
-                        Red,
+                    Color::Red => Self::new(
+                        Color::Red,
                         Rc::new(Self::new(
-                            Black,
+                            Color::Black,
                             Rc::clone(left.left().left()),
                             Rc::clone(left.left().right()),
                         )),
                         Rc::new(Self::new(
-                            Black,
+                            Color::Black,
                             Rc::clone(right.left()),
                             Rc::clone(right.right()),
                         )),
@@ -137,12 +136,12 @@ impl<T: Clone> Node<T> {
                 _ => Self::new(left.color(), Rc::clone(left.left()), Rc::clone(right)),
             }
         } else {
-            Self::new(Red, Rc::clone(left), Rc::clone(right))
+            Self::new(Color::Red, Rc::clone(left), Rc::clone(right))
         })
     }
     fn split(tree: &Rc<Self>, index: usize) -> (Rc<Self>, Rc<Self>) {
         match &**tree {
-            Tree { left, right, .. } => {
+            Node::Tree { left, right, .. } => {
                 if index < left.len() {
                     let (left_left, left_right) = Self::split(left, index);
                     (left_left, Self::merge(&left_right, right))
@@ -179,7 +178,7 @@ impl<T: Clone> PersistentLazyRBTree<T> {
             (Some(left), Some(right)) => {
                 let root = Node::merge(left, right);
                 Self::from(Rc::new(Node::new(
-                    Black,
+                    Color::Black,
                     Rc::clone(root.left()),
                     Rc::clone(root.right()),
                 )))
@@ -201,7 +200,7 @@ impl<T: Clone> PersistentLazyRBTree<T> {
         assert!(index <= self.len());
         let (ref left, ref right) = self.split(index);
         Self::merge(
-            &Self::merge(left, &Self::from(Rc::new(Leaf { val }))),
+            &Self::merge(left, &Self::from(Rc::new(Node::Leaf { val }))),
             right,
         )
     }

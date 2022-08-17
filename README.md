@@ -4,11 +4,8 @@
 
 現状は[これ](http://hos.ac/slides/20120323_joi_copypaste.pdf)を参考に merge/split ベース
 
-[定数倍がだいぶ重い](https://atcoder.jp/contests/joisc2012/submissions/33914199)
-
 これからやること
 
--   特に Rust, C++ での定数倍高速化 (非再帰にする、メモリプールを使う、ポインタはなるべくムーブする)
 -   遅延伝搬の実装
 -   言語を増やす (Haskell, OCaml, Go, Kotlin, Zig, Carbon あたりやりたい)
 -   ベンチマークを作る
